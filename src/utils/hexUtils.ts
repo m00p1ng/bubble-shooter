@@ -6,6 +6,7 @@ import {
   GRID_COLS,
   GRID_ROWS,
   BUBBLE_RADIUS,
+  DANGER_LINE_Y,
 } from '../config';
 
 export interface GridPos {
@@ -70,6 +71,10 @@ export function getNeighbors(row: number, col: number): GridPos[] {
     const maxCol = colsForRow(c.row);
     return c.col >= 0 && c.col < maxCol;
   });
+}
+
+export function isGridCellPastDangerLine(row: number, col: number): boolean {
+  return gridToPixel(row, col).y + BUBBLE_RADIUS >= DANGER_LINE_Y;
 }
 
 export { GRID_ORIGIN_X, GRID_ORIGIN_Y, COL_WIDTH, ROW_HEIGHT, GRID_COLS, BUBBLE_RADIUS };

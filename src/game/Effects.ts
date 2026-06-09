@@ -1,32 +1,30 @@
 import Phaser from 'phaser';
 import type { BubbleColor } from './Bubble';
 import { COLOR_CONFIG } from './Bubble';
-import { BUBBLE_RADIUS } from '../config';
+import { POP_PARTICLE_COUNT, POP_PARTICLE_SPEED_MIN, POP_PARTICLE_SPEED_MAX, POP_PARTICLE_LIFETIME } from '../config';
 
 export class Effects {
-  constructor(private scene: Phaser.Scene) {}
+  private emitter: Phaser.GameObjects.Particles.ParticleEmitter;
+
+  constructor(private scene: Phaser.Scene) {
+    this.emitter = scene.add.particles(0, 0, 'particle', {
+      speed: { min: POP_PARTICLE_SPEED_MIN, max: POP_PARTICLE_SPEED_MAX },
+      scale: { start: 1, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: POP_PARTICLE_LIFETIME,
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+  }
 
   popBurst(x: number, y: number, color: BubbleColor): void {
     const hexColor = parseInt(COLOR_CONFIG[color].glow.replace('#', ''), 16);
-    const COUNT = 14;
+    this.emitter.setParticleTint(hexColor);
+    this.emitter.explode(POP_PARTICLE_COUNT, x, y);
+  }
 
-    for (let i = 0; i < COUNT; i++) {
-      const angle = (i / COUNT) * Math.PI * 2;
-      const speed = Phaser.Math.Between(60, 140);
-      const radius = BUBBLE_RADIUS * 0.4;
-
-      const dot = this.scene.add.circle(x, y, radius, hexColor, 1);
-      this.scene.tweens.add({
-        targets: dot,
-        x: x + Math.cos(angle) * speed,
-        y: y + Math.sin(angle) * speed,
-        scaleX: 0,
-        scaleY: 0,
-        alpha: 0,
-        duration: Phaser.Math.Between(300, 500),
-        ease: 'Power2',
-        onComplete: () => dot.destroy(),
-      });
-    }
+  shakeCamera(matchCount: number): void {
+    const intensity = 0.005 * matchCount;
+    this.scene.cameras.main.shake(150, intensity);
   }
 }

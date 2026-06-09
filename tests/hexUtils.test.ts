@@ -3,14 +3,28 @@ import {
   gridToPixel,
   pixelToNearestGrid,
   getNeighbors,
+  isGridCellPastDangerLine,
 } from '../src/utils/hexUtils';
-import { GRID_ORIGIN_X, GRID_ORIGIN_Y, COL_WIDTH, ROW_HEIGHT, GRID_COLS } from '../src/config';
+import {
+  GRID_ORIGIN_X,
+  GRID_ORIGIN_Y,
+  COL_WIDTH,
+  ROW_HEIGHT,
+  GRID_COLS,
+  BUBBLE_RADIUS,
+  HUD_HEIGHT,
+} from '../src/config';
 
 describe('gridToPixel', () => {
   it('returns origin for cell (0, 0)', () => {
     const { x, y } = gridToPixel(0, 0);
     expect(x).toBe(GRID_ORIGIN_X);
     expect(y).toBe(GRID_ORIGIN_Y);
+  });
+
+  it('keeps the top bubble below the HUD', () => {
+    const { y } = gridToPixel(0, 0);
+    expect(y - BUBBLE_RADIUS).toBeGreaterThanOrEqual(HUD_HEIGHT);
   });
 
   it('increments x by COL_WIDTH for each column in even row', () => {
@@ -68,5 +82,11 @@ describe('getNeighbors', () => {
     // Top-right corner of even row (0, GRID_COLS-1)
     const n = getNeighbors(0, GRID_COLS - 1);
     expect(n.every((c) => c.row >= 0 && c.col >= 0)).toBe(true);
+  });
+});
+
+describe('isGridCellPastDangerLine', () => {
+  it('does not reject the lowest legal grid row', () => {
+    expect(isGridCellPastDangerLine(9, 0)).toBe(false);
   });
 });

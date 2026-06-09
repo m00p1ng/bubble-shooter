@@ -121,6 +121,46 @@ export class Grid {
     return orphans;
   }
 
+  findEmptyNeighbors(
+    cells: Array<{ row: number; col: number }>,
+  ): Array<{ row: number; col: number }> {
+    const empty = new Map<string, { row: number; col: number }>();
+
+    for (const cell of cells) {
+      for (const neighbor of this.getNeighbors(cell.row, cell.col)) {
+        if (!this.getCell(neighbor.row, neighbor.col)?.color) {
+          empty.set(`${neighbor.row},${neighbor.col}`, neighbor);
+        }
+      }
+    }
+
+    return [...empty.values()];
+  }
+
+  findNearestEmpty(
+    starts: Array<{ row: number; col: number }>,
+  ): { row: number; col: number } | null {
+    const visited = new Set<string>();
+    const queue = [...starts];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const key = `${current.row},${current.col}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+
+      if (!this.getCell(current.row, current.col)?.color) return current;
+
+      for (const neighbor of this.getNeighbors(current.row, current.col)) {
+        if (!visited.has(`${neighbor.row},${neighbor.col}`)) {
+          queue.push(neighbor);
+        }
+      }
+    }
+
+    return null;
+  }
+
   countBubbles(): number {
     let n = 0;
     for (let r = 0; r < this.rows; r++)

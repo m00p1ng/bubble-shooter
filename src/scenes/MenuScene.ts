@@ -1,14 +1,20 @@
 import Phaser from 'phaser';
 import { ALL_COLORS, getBubbleTextureKey } from '../game/Bubble';
 import { fadeOutAndStart, fadeIn } from '../utils/transition';
+import { AudioManager } from '../audio/AudioManager';
+import { isMobile } from '../utils/mobile';
+import { createStarfield } from '../utils/starfield';
 
 export class MenuScene extends Phaser.Scene {
+  private starLayers!: Phaser.GameObjects.Container[];
+
   constructor() {
     super({ key: 'MenuScene' });
   }
 
   create(): void {
     fadeIn(this);
+    AudioManager.getInstance().startMusic('menu');
     this.createBackground();
     this.createTitle();
     this.createFloatingBubbles();
@@ -25,17 +31,9 @@ export class MenuScene extends Phaser.Scene {
         this.scale.height,
         0x050510,
       )
-      .setDepth(-1);
+      .setDepth(-10);
 
-    for (let i = 0; i < 80; i++) {
-      this.add.circle(
-        Phaser.Math.Between(0, this.scale.width),
-        Phaser.Math.Between(0, this.scale.height),
-        Phaser.Math.FloatBetween(0.5, 1.5),
-        0xffffff,
-        Phaser.Math.FloatBetween(0.2, 0.7),
-      );
-    }
+    this.starLayers = createStarfield(this);
   }
 
   private createTitle(): void {
@@ -101,7 +99,14 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
-    playBtn.on('pointerover', () => playBtn.setColor('#a5d6a7'));
+    if (isMobile()) {
+      playBtn.setPadding(12);
+    }
+
+    playBtn.on('pointerover', () => {
+      playBtn.setColor('#a5d6a7');
+      AudioManager.getInstance().playBounce();
+    });
     playBtn.on('pointerout', () => playBtn.setColor('#69f0ae'));
     playBtn.on('pointerdown', () => {
       fadeOutAndStart(this, 'MapScene');

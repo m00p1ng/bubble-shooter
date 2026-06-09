@@ -1,21 +1,31 @@
 import Phaser from 'phaser';
 import { Grid } from '../game/Grid';
 import { getBubbleTextureKey } from '../game/Bubble';
-import { gridToPixel, pixelToNearestGrid, getNeighbors } from '../utils/hexUtils';
+import {
+  gridToPixel,
+  pixelToNearestGrid,
+  getNeighbors,
+  isGridCellPastDangerLine,
+} from '../utils/hexUtils';
 import { Trajectory } from '../game/Trajectory';
 import { Shooter } from '../game/Shooter';
 import { saveLevelResult } from '../utils/storage';
 import { Effects } from '../game/Effects';
+import { AudioManager } from '../audio/AudioManager';
+import { normalizePointer, isMobile, getTouchScaleFactor } from '../utils/mobile';
+import { createStarfield } from '../utils/starfield';
 import {
   GRID_COLS, GRID_ROWS, GAME_WIDTH, GAME_HEIGHT,
   SHOOTER_X, SHOOTER_Y, DANGER_LINE_Y,
   BUBBLE_SPEED, BUBBLE_RADIUS, GRID_ORIGIN_Y,
   MATCH_MIN, SCORE_PER_POP, SCORE_PER_ORPHAN,
+  BUBBLE_IDLE_PULSE_SCALE, BUBBLE_IDLE_PULSE_DURATION, BUBBLE_IDLE_PULSE_DELAY_VARIANCE,
 } from '../config';
 import type { LevelData } from '../types/LevelData';
 import type { BubbleColor } from '../game/Bubble';
 
 type FlyingBubble = Phaser.GameObjects.Image & { vx: number; vy: number; bubbleColor: BubbleColor };
+type SnapResult = { row: number; col: number } | 'overflow' | null;
 
 export class GameScene extends Phaser.Scene {
   private grid!: Grid;
@@ -49,6 +59,7 @@ export class GameScene extends Phaser.Scene {
     this.renderGrid();
 
     this.effects = new Effects(this);
+    AudioManager.getInstance().startMusic('game');
     this.totalBubbles = this.grid.countBubbles();
     this.score = 0;
     this.gameOver = false;
@@ -82,9 +93,11 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (this.gameOver) return;
-      const dy = SHOOTER_Y - p.y;
+      const normalized = normalizePointer(p);
+      if (!normalized.isTap) return;
+      const dy = SHOOTER_Y - normalized.y;
       if (dy <= 0) return;
-      const dx = p.x - SHOOTER_X;
+      const dx = normalized.x - SHOOTER_X;
       const angle = Math.atan2(dx, dy);
       this.shooter.setAimAngle(angle);
       this.shooter.fire();
@@ -119,16 +132,27 @@ export class GameScene extends Phaser.Scene {
       }
 
       const snapCell = this.findSnapCell(b.x, b.y);
-      if (snapCell) {
+      if (snapCell === 'overflow') {
+        this.flyingBubbles.splice(i, 1);
+        b.destroy();
+        this.triggerLose('overflow');
+      } else if (snapCell) {
         this.flyingBubbles.splice(i, 1);
         this.placeBubble(b.bubbleColor, snapCell.row, snapCell.col);
         b.destroy();
+      } else if (b.y <= BUBBLE_RADIUS) {
+        this.flyingBubbles.splice(i, 1);
+        b.destroy();
+        this.triggerLose('overflow');
       }
     }
   }
 
   private drawBackground(): void {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x050510);
+    this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x050510)
+      .setDepth(-10);
+    createStarfield(this);
 
     const line = this.add.graphics();
     line.lineStyle(1, 0xff4081, 0.3);
@@ -150,8 +174,26 @@ export class GameScene extends Phaser.Scene {
         const { x, y } = gridToPixel(r, c);
         const sprite = this.add.image(x, y, getBubbleTextureKey(cell.color));
         this.gridSprites.set(`${r},${c}`, sprite);
+        this.addIdleAnimation(sprite);
+        if (isMobile()) {
+          sprite.setInteractive(new Phaser.Geom.Circle(0, 0, BUBBLE_RADIUS * getTouchScaleFactor()), Phaser.Geom.Circle.Contains);
+        }
       }
     }
+  }
+
+  private addIdleAnimation(sprite: Phaser.GameObjects.Image): void {
+    const delay = Phaser.Math.Between(0, BUBBLE_IDLE_PULSE_DELAY_VARIANCE);
+    this.tweens.add({
+      targets: sprite,
+      scaleX: BUBBLE_IDLE_PULSE_SCALE,
+      scaleY: BUBBLE_IDLE_PULSE_SCALE,
+      duration: BUBBLE_IDLE_PULSE_DURATION / 2,
+      delay,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 
   private onShooterFire(color: BubbleColor, angle: number): void {
@@ -162,36 +204,58 @@ export class GameScene extends Phaser.Scene {
     bubble.vy = vy;
     bubble.bubbleColor = color;
     this.flyingBubbles.push(bubble);
+    AudioManager.getInstance().playShoot();
   }
 
-  private findSnapCell(bx: number, by: number): { row: number; col: number } | null {
+  private findSnapCell(bx: number, by: number): SnapResult {
     const stopY = GRID_ORIGIN_Y + BUBBLE_RADIUS;
+    const contacts: Array<{ row: number; col: number }> = [];
 
     for (let r = 0; r < this.grid.rows; r++) {
       for (let c = 0; c < this.grid.getColsForRow(r); c++) {
         if (!this.grid.getCell(r, c)?.color) continue;
         const pos = gridToPixel(r, c);
         if (Math.hypot(bx - pos.x, by - pos.y) < BUBBLE_RADIUS * 2) {
-          return this.nearestEmptyAround(bx, by, r, c);
+          contacts.push({ row: r, col: c });
         }
       }
     }
 
+    if (contacts.length > 0) {
+      const localCell = this.nearestEmptyAroundContacts(bx, by, contacts);
+      if (localCell) {
+        return isGridCellPastDangerLine(localCell.row, localCell.col)
+          ? 'overflow'
+          : localCell;
+      }
+
+      if (contacts.some(({ row }) => row === this.grid.rows - 1)) {
+        return 'overflow';
+      }
+
+      const fallbackCell = this.grid.findNearestEmpty(contacts);
+      if (!fallbackCell || isGridCellPastDangerLine(fallbackCell.row, fallbackCell.col)) {
+        return 'overflow';
+      }
+      return fallbackCell;
+    }
+
     if (by <= stopY) {
-      return this.nearestEmptyAt(pixelToNearestGrid(bx, by));
+      const snapCell = this.nearestEmptyAt(pixelToNearestGrid(bx, by));
+      if (!snapCell || isGridCellPastDangerLine(snapCell.row, snapCell.col)) {
+        return 'overflow';
+      }
+      return snapCell;
     }
 
     return null;
   }
 
-  private nearestEmptyAround(
+  private nearestEmptyAroundContacts(
     bx: number, by: number,
-    hitRow: number, hitCol: number,
+    contacts: Array<{ row: number; col: number }>,
   ): { row: number; col: number } | null {
-    const candidates = [
-      { row: hitRow, col: hitCol },
-      ...getNeighbors(hitRow, hitCol),
-    ];
+    const candidates = this.grid.findEmptyNeighbors(contacts);
     let best: { row: number; col: number } | null = null;
     let bestDist = Infinity;
     for (const cand of candidates) {
@@ -220,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = gridToPixel(row, col);
     const sprite = this.add.image(x, y, getBubbleTextureKey(color));
     this.gridSprites.set(`${row},${col}`, sprite);
+    this.addIdleAnimation(sprite);
 
     this.tweens.add({ targets: sprite, scaleX: 1.2, scaleY: 1.2, duration: 60, yoyo: true });
 
@@ -241,9 +306,10 @@ export class GameScene extends Phaser.Scene {
       this.grid.setCell(r, c, null);
     });
     this.score += matched.length * SCORE_PER_POP;
+    AudioManager.getInstance().playPop();
 
     this.events.emit('score-update', this.score);
-    // this.shakeCamera(matched.length);
+    this.effects.shakeCamera(matched.length);
     this.spawnScoreText(popX, popY, matched.length * SCORE_PER_POP);
 
     const orphans = this.grid.findOrphans();
@@ -252,6 +318,7 @@ export class GameScene extends Phaser.Scene {
       const sprite = this.gridSprites.get(`${r},${c}`);
       this.grid.setCell(r, c, null);
       this.gridSprites.delete(`${r},${c}`);
+      AudioManager.getInstance().playOrphanDrop();
       if (sprite) {
         this.tweens.add({
           targets: sprite,
@@ -279,10 +346,6 @@ export class GameScene extends Phaser.Scene {
     const cell = this.grid.getCell(row, col);
     if (cell?.color) this.effects.popBurst(sprite.x, sprite.y, cell.color);
     sprite.destroy();
-  }
-
-  private shakeCamera(matchCount: number): void {
-    this.cameras.main.shake(150, 0.005 * matchCount);
   }
 
   private spawnScoreText(x: number, y: number, points: number): void {
@@ -331,6 +394,7 @@ export class GameScene extends Phaser.Scene {
 
   private triggerWin(): void {
     this.gameOver = true;
+    AudioManager.getInstance().playWin();
     const stars = this.calcStars();
     saveLevelResult(this.levelId, stars, this.score);
     this.events.emit('game-over', true, this.score, stars);
@@ -340,6 +404,7 @@ export class GameScene extends Phaser.Scene {
   private triggerLose(reason: string): void {
     console.log('lose:', reason);
     this.gameOver = true;
+    AudioManager.getInstance().playLose();
     saveLevelResult(this.levelId, 0, this.score);
     this.events.emit('game-over', false, this.score, 0);
     this.showResultOverlay(false, 0);
@@ -406,6 +471,7 @@ export class GameScene extends Phaser.Scene {
       this.timerEvent.remove();
       this.timerEvent = null;
     }
+    AudioManager.getInstance().stopMusic();
     this.scene.stop('UIScene');
   }
 }

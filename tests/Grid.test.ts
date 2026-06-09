@@ -82,6 +82,38 @@ describe('Grid.countBubbles', () => {
   });
 });
 
+describe('Grid.findEmptyNeighbors', () => {
+  it('finds a legal snap cell across all contacted bubbles', () => {
+    const g = new Grid(4, 5);
+    g.loadFromData([
+      ['RED', 'RED', 'RED', 'RED', 'RED'],
+      ['RED', 'RED', 'RED', 'RED'],
+      ['RED', 'RED', null, 'RED', 'RED'],
+    ]);
+
+    expect(g.findEmptyNeighbors([
+      { row: 0, col: 2 },
+      { row: 1, col: 2 },
+    ])).toContainEqual({ row: 2, col: 2 });
+  });
+});
+
+describe('Grid.findNearestEmpty', () => {
+  it('finds a fallback vacancy when a collision is above the danger line', () => {
+    const g = new Grid(4, 5);
+    g.loadFromData([
+      ['RED', 'RED', 'RED', 'RED', 'RED'],
+      ['RED', 'RED', 'RED', 'RED'],
+      ['RED', 'RED', null, 'RED', 'RED'],
+    ]);
+
+    expect(g.findNearestEmpty([
+      { row: 0, col: 2 },
+      { row: 1, col: 2 },
+    ])).toEqual({ row: 2, col: 2 });
+  });
+});
+
 describe('Grid.isEmpty', () => {
   it('returns true for empty grid', () => {
     const g = new Grid(2, 4);

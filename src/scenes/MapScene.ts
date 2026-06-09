@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { loadSave, getLevelProgress, isLevelUnlocked } from '../utils/storage';
 import { fadeOutAndStart, fadeIn } from '../utils/transition';
 import type { LevelData } from '../types/LevelData';
+import { AudioManager } from '../audio/AudioManager';
+import { isMobile } from '../utils/mobile';
 
 const LEVEL_NODES = [
   { x: 90, y: 110 },
@@ -24,6 +26,8 @@ const LOCKED_COLOR = 0x444444;
 export class MapScene extends Phaser.Scene {
   private briefingContainer: Phaser.GameObjects.Container | null = null;
   private agentMarker!: Phaser.GameObjects.Triangle;
+  private parallaxLayers: Phaser.GameObjects.Container[] = [];
+  private ambientParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() {
     super({ key: 'MapScene' });
@@ -37,6 +41,7 @@ export class MapScene extends Phaser.Scene {
     this.drawConnections();
     this.drawNodes();
     this.placeAgentMarker();
+    this.createAmbientParticles();
   }
 
   private createBackground(): void {
@@ -48,7 +53,28 @@ export class MapScene extends Phaser.Scene {
         this.scale.height,
         0x050510,
       )
-      .setDepth(-1);
+      .setDepth(-10);
+
+    for (let layer = 0; layer < 3; layer++) {
+      const container = this.add.container(0, 0);
+      const starCount = 40 - layer * 10;
+      const alpha = 0.7 - layer * 0.2;
+      const radius = 1.5 - layer * 0.3;
+
+      for (let i = 0; i < starCount; i++) {
+        container.add(
+          this.add.circle(
+            Phaser.Math.Between(0, this.scale.width),
+            Phaser.Math.Between(0, this.scale.height),
+            radius,
+            0xffffff,
+            alpha,
+          ),
+        );
+      }
+      container.setDepth(-5 + layer);
+      this.parallaxLayers.push(container);
+    }
 
     const g = this.add.graphics();
     g.lineStyle(1, 0x0a1428, 0.5);
@@ -58,6 +84,32 @@ export class MapScene extends Phaser.Scene {
     for (let y = 0; y < this.scale.height; y += 40) {
       g.lineBetween(0, y, this.scale.width, y);
     }
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      const cx = this.scale.width / 2;
+      const cy = this.scale.height / 2;
+      const dx = (p.x - cx) / cx;
+      const dy = (p.y - cy) / cy;
+      this.parallaxLayers.forEach((layer, i) => {
+        layer.x = dx * (i + 1) * 8;
+        layer.y = dy * (i + 1) * 8;
+      });
+    });
+  }
+
+  private createAmbientParticles(): void {
+    this.ambientParticles = this.add.particles(0, 0, 'particle', {
+      x: { min: 0, max: this.scale.width },
+      y: { min: this.scale.height, max: this.scale.height + 10 },
+      speedY: { min: -20, max: -40 },
+      speedX: { min: -5, max: 5 },
+      scale: { start: 0.5, end: 0 },
+      alpha: { start: 0.4, end: 0 },
+      lifespan: 8000,
+      frequency: 400,
+      quantity: 1,
+      tint: [0x00e5ff, 0xff4081, 0x7c4dff],
+    });
   }
 
   private createBackButton(): void {
@@ -175,11 +227,25 @@ export class MapScene extends Phaser.Scene {
       }
 
       if (unlocked) {
-        circle.setInteractive({ useHandCursor: true });
+        const hitRadius = isMobile() ? NODE_RADIUS * 1.5 : NODE_RADIUS;
+        circle.setInteractive(new Phaser.Geom.Circle(0, 0, hitRadius), Phaser.Geom.Circle.Contains);
         label.setInteractive({ useHandCursor: true });
         const onClick = () => this.showBriefing(levelId);
+        const onOver = () => {
+          circle.setScale(1.1);
+          label.setScale(1.1);
+          AudioManager.getInstance().playBounce();
+        };
+        const onOut = () => {
+          circle.setScale(1);
+          label.setScale(1);
+        };
         circle.on('pointerdown', onClick);
         label.on('pointerdown', onClick);
+        circle.on('pointerover', onOver);
+        circle.on('pointerout', onOut);
+        label.on('pointerover', onOver);
+        label.on('pointerout', onOut);
       }
     });
   }

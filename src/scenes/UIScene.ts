@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH } from '../config';
+import { GAME_WIDTH, HUD_HEIGHT } from '../config';
+import { AudioManager } from '../audio/AudioManager';
 
 export class UIScene extends Phaser.Scene {
   private scoreTxt!: Phaser.GameObjects.Text;
@@ -31,6 +32,7 @@ export class UIScene extends Phaser.Scene {
     this.drawProgressBar(1);
 
     this.createPauseButton();
+    this.createMuteButton();
 
     game.events.on('score-update', (s: number) => {
       this.score = s;
@@ -50,6 +52,29 @@ export class UIScene extends Phaser.Scene {
     game.events.on('progress-update', (remaining: number, total: number) => {
       this.drawProgressBar(remaining / total);
     });
+  }
+
+  private createMuteButton(): void {
+    const btn = this.add
+      .text(16, 48, '♪', {
+        fontSize: '16px',
+        color: '#c0c8ff',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true });
+
+    const updateIcon = () => {
+      btn.setText(AudioManager.getInstance().isMuted() ? '♪' : '♫');
+      btn.setColor(AudioManager.getInstance().isMuted() ? '#ff4081' : '#c0c8ff');
+    };
+
+    btn.on('pointerdown', () => {
+      AudioManager.getInstance().toggleMute();
+      updateIcon();
+    });
+
+    updateIcon();
   }
 
   private createPauseButton(): void {
@@ -93,7 +118,7 @@ export class UIScene extends Phaser.Scene {
   private drawHudBackground(): void {
     const bg = this.add.graphics();
     bg.fillStyle(0x0a1428, 0.85);
-    bg.fillRect(0, 0, GAME_WIDTH, 36);
+    bg.fillRect(0, 0, GAME_WIDTH, HUD_HEIGHT);
   }
 
   private drawProgressBar(fraction: number): void {

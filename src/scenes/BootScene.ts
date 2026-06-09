@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { ALL_COLORS, COLOR_CONFIG, getBubbleTextureKey, getShooterTextureKey } from '../game/Bubble';
 import { BUBBLE_RADIUS } from '../config';
+import { AudioManager } from '../audio/AudioManager';
+import { createStarfield } from '../utils/starfield';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -8,6 +10,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    createStarfield(this);
+
     for (let i = 1; i <= 10; i++) {
       const id = i.toString().padStart(3, '0');
       this.load.json(`level-${i}`, `data/levels/level-${id}.json`);
@@ -24,6 +28,8 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.generateBubbleTextures();
     this.generateShooterTexture();
+    this.generateParticleTexture();
+    AudioManager.getInstance().init(this);
     this.scene.start('MenuScene');
   }
 
@@ -59,6 +65,19 @@ export class BootScene extends Phaser.Scene {
 
       ct.refresh();
     }
+  }
+
+  private generateParticleTexture(): void {
+    const key = 'particle';
+    if (this.textures.exists(key)) return;
+    const ct = this.textures.createCanvas(key, 8, 8)!;
+    const ctx = ct.context;
+    const grad = ctx.createRadialGradient(4, 4, 0, 4, 4, 4);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 8, 8);
+    ct.refresh();
   }
 
   private generateShooterTexture(): void {

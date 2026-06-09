@@ -5,6 +5,9 @@ import { MapScene } from './scenes/MapScene';
 import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { GAME_WIDTH, GAME_HEIGHT } from './config';
+import { preventZoom } from './utils/mobile';
+
+preventZoom();
 
 new Phaser.Game({
   type: Phaser.AUTO,
