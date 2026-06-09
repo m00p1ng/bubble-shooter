@@ -1,5 +1,11 @@
 import Phaser from 'phaser';
-import { ALL_COLORS, COLOR_CONFIG, getBubbleTextureKey, getShooterTextureKey } from '../game/Bubble';
+import {
+  ALL_COLORS,
+  COLOR_CONFIG,
+  getBubbleTextureKey,
+  getShooterCradleTextureKey,
+  getShooterTextureKey,
+} from '../game/Bubble';
 import { BUBBLE_RADIUS } from '../config';
 import { AudioManager } from '../audio/AudioManager';
 import { createStarfield } from '../utils/starfield';
@@ -28,6 +34,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.generateBubbleTextures();
     this.generateShooterTexture();
+    this.generateShooterCradleTexture();
     this.generateSpecialBubbleTextures();
     this.generateParticleTexture();
     AudioManager.getInstance().init(this);
@@ -100,6 +107,36 @@ export class BootScene extends Phaser.Scene {
     ctx.lineWidth = 2;
     ctx.stroke();
     ct.refresh();
+  }
+
+  private generateShooterCradleTexture(): void {
+    const key = getShooterCradleTextureKey();
+    if (this.textures.exists(key)) return;
+
+    const size = 92;
+    const center = size / 2;
+    const texture = this.textures.createCanvas(key, size, size)!;
+    const ctx = texture.context;
+
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(center, center, 38, Math.PI * 0.12, Math.PI * 0.88, true);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#7c4dff';
+    ctx.beginPath();
+    ctx.moveTo(center - 28, size - 16);
+    ctx.lineTo(center + 28, size - 16);
+    ctx.lineTo(center + 36, size - 2);
+    ctx.lineTo(center - 36, size - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    texture.refresh();
   }
 
   private generateSpecialBubbleTextures(): void {

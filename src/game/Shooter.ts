@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import type { BubbleColor, BubbleType } from './Bubble';
-import { getBubbleTextureKey } from './Bubble';
+import {
+  getBubbleTextureKey,
+  getShooterCradleTextureKey,
+} from './Bubble';
 import {
   SHOOTER_X,
   SHOOTER_Y,
@@ -17,6 +20,7 @@ export interface QueuedBubble {
 }
 
 export class Shooter extends Phaser.Events.EventEmitter {
+  private cradleSprite!: Phaser.GameObjects.Image;
   private currentSprite!: Phaser.GameObjects.Image;
   private nextSprite!: Phaser.GameObjects.Image;
   private aimAngle = 0;
@@ -38,6 +42,11 @@ export class Shooter extends Phaser.Events.EventEmitter {
   }
 
   private createSprites(): void {
+    this.cradleSprite = this.scene.add.image(
+      SHOOTER_X,
+      SHOOTER_Y - BUBBLE_RADIUS * 1.5,
+      getShooterCradleTextureKey(),
+    );
     this.currentSprite = this.scene.add.image(
       SHOOTER_X,
       SHOOTER_Y - BUBBLE_RADIUS * 1.5,
@@ -56,7 +65,19 @@ export class Shooter extends Phaser.Events.EventEmitter {
       SHOOTER_X + 52,
       SHOOTER_Y + 10,
       getBubbleTextureKey(this.next.color, this.next.type),
-    ).setScale(0.75);
+    ).setScale(0.75).setInteractive({ useHandCursor: true });
+    this.nextSprite.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
+        this.swapBubbles();
+      },
+    );
     this.scene.add.text(SHOOTER_X + 52, SHOOTER_Y + 28, 'NEXT', {
       fontSize: '10px',
       color: '#8892b0',
@@ -89,12 +110,27 @@ export class Shooter extends Phaser.Events.EventEmitter {
 
     this.current = this.next;
     this.next = this.randomBubble();
-    this.currentSprite.setTexture(getBubbleTextureKey(this.current.color, this.current.type));
-    this.nextSprite.setTexture(getBubbleTextureKey(this.next.color, this.next.type));
+    this.refreshBubbleTextures();
 
     this.scene.time.delayedCall(SHOOT_COOLDOWN, () => {
       this.cooldown = false;
     });
+  }
+
+  swapBubbles(): void {
+    if (this.cooldown) return;
+
+    [this.current, this.next] = [this.next, this.current];
+    this.refreshBubbleTextures();
+  }
+
+  private refreshBubbleTextures(): void {
+    this.currentSprite.setTexture(
+      getBubbleTextureKey(this.current.color, this.current.type),
+    );
+    this.nextSprite.setTexture(
+      getBubbleTextureKey(this.next.color, this.next.type),
+    );
   }
 
   private randomBubble(): QueuedBubble {
@@ -107,6 +143,7 @@ export class Shooter extends Phaser.Events.EventEmitter {
   }
 
   destroy(): void {
+    this.cradleSprite.destroy();
     this.currentSprite.destroy();
     this.nextSprite.destroy();
     this.removeAllListeners();
