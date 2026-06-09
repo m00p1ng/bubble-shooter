@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Grid } from '../game/Grid';
 import { getBubbleTextureKey, getShooterTextureKey } from '../game/Bubble';
 import { gridToPixel } from '../utils/hexUtils';
+import { Trajectory } from '../game/Trajectory';
 import {
   GRID_COLS, GRID_ROWS, GAME_WIDTH, GAME_HEIGHT,
   SHOOTER_X, SHOOTER_Y, DANGER_LINE_Y,
@@ -14,6 +15,7 @@ export class GameScene extends Phaser.Scene {
   private gridSprites!: Map<string, Phaser.GameObjects.Image>;
   private levelData!: LevelData;
   private levelId!: number;
+  private trajectory!: Trajectory;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -30,6 +32,15 @@ export class GameScene extends Phaser.Scene {
     this.loadGridFromLevel();
     this.renderGrid();
     this.drawShooter();
+
+    this.trajectory = new Trajectory(this);
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      const dx = p.x - SHOOTER_X;
+      const dy = SHOOTER_Y - p.y;
+      if (dy <= 0) return;
+      const angle = Math.atan2(dx, dy);
+      this.trajectory.update(angle);
+    });
   }
 
   private drawBackground(): void {
