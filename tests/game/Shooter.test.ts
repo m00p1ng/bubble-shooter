@@ -95,7 +95,9 @@ describe('Shooter bubble swapping', () => {
     const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
     shooter.current = { color: 'RED', type: 'STONE' };
     shooter.next = { color: 'BLUE', type: 'BOMB' };
-    const activeSprite = images.find((image) => image.x === 240)!;
+    const activeSprite = images.find(
+      (image) => image.x === 240 && image.texture !== 'shooter_cradle',
+    )!;
     const nextSprite = images.find((image) => image.x === 292)!;
 
     expect(nextSprite.pointerDown).toBeTypeOf('function');
@@ -139,5 +141,16 @@ describe('Shooter bubble swapping', () => {
 
     expect(shooter.current).toEqual(currentAfterFire);
     expect(shooter.next).toEqual(nextAfterFire);
+  });
+
+  it('creates and destroys the energy cradle with the shooter', () => {
+    const shooter = new Shooter(createScene() as never, ['RED']);
+    const cradle = images.find((image) => image.texture === 'shooter_cradle');
+
+    expect(cradle).toBeDefined();
+
+    shooter.destroy();
+
+    expect(cradle?.destroy).toHaveBeenCalledOnce();
   });
 });

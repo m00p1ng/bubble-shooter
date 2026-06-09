@@ -46,6 +46,10 @@ export function getShooterTextureKey(): string {
   return 'shooter';
 }
 
+export function getShooterCradleTextureKey(): string {
+  return 'shooter_cradle';
+}
+
 export function parseGridCellData(data: unknown): GridCell | null {
   if (data === null) return null;
 

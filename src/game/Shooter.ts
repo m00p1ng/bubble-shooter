@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import type { BubbleColor, BubbleType } from './Bubble';
-import { getBubbleTextureKey } from './Bubble';
+import {
+  getBubbleTextureKey,
+  getShooterCradleTextureKey,
+} from './Bubble';
 import {
   SHOOTER_X,
   SHOOTER_Y,
@@ -17,6 +20,7 @@ export interface QueuedBubble {
 }
 
 export class Shooter extends Phaser.Events.EventEmitter {
+  private cradleSprite!: Phaser.GameObjects.Image;
   private currentSprite!: Phaser.GameObjects.Image;
   private nextSprite!: Phaser.GameObjects.Image;
   private aimAngle = 0;
@@ -38,6 +42,11 @@ export class Shooter extends Phaser.Events.EventEmitter {
   }
 
   private createSprites(): void {
+    this.cradleSprite = this.scene.add.image(
+      SHOOTER_X,
+      SHOOTER_Y - BUBBLE_RADIUS * 1.5,
+      getShooterCradleTextureKey(),
+    );
     this.currentSprite = this.scene.add.image(
       SHOOTER_X,
       SHOOTER_Y - BUBBLE_RADIUS * 1.5,
@@ -123,6 +132,7 @@ export class Shooter extends Phaser.Events.EventEmitter {
   }
 
   destroy(): void {
+    this.cradleSprite.destroy();
     this.currentSprite.destroy();
     this.nextSprite.destroy();
     this.removeAllListeners();
