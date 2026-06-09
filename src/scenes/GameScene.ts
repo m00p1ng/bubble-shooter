@@ -20,7 +20,7 @@ import {
   BUBBLE_SPEED, BUBBLE_RADIUS, GRID_ORIGIN_Y,
   MATCH_MIN, SCORE_PER_POP, SCORE_PER_ORPHAN,
   BUBBLE_IDLE_PULSE_SCALE, BUBBLE_IDLE_PULSE_DURATION, BUBBLE_IDLE_PULSE_DELAY_VARIANCE,
-  BOMB_RADIUS,
+  BOMB_RADIUS, COLOR_BOMB_SCORE,
 } from '../config';
 import type { LevelData } from '../types/LevelData';
 import type { BubbleColor, BubbleType } from '../game/Bubble';
@@ -49,6 +49,7 @@ export class GameScene extends Phaser.Scene {
   private timerEvent: Phaser.Time.TimerEvent | null = null;
   private gameOver = false;
   private aimAssistActive = false;
+  private colorBombPending = false;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -70,6 +71,8 @@ export class GameScene extends Phaser.Scene {
     this.totalBubbles = this.grid.countBubbles();
     this.score = 0;
     this.gameOver = false;
+    this.aimAssistActive = false;
+    this.colorBombPending = false;
 
     if (this.levelData.type === 'timer') {
       this.timeLeft = this.levelData.time ?? 60;
@@ -99,6 +102,7 @@ export class GameScene extends Phaser.Scene {
 
     this.trajectory = new Trajectory(this);
     this.events.on('activate-aim-assist', this.activateAimAssist, this);
+    this.events.on('activate-color-bomb', this.activateColorBomb, this);
 
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       const dx = p.x - SHOOTER_X;
@@ -110,7 +114,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (this.gameOver) return;
+      if (this.gameOver || this.colorBombPending) return;
       const normalized = normalizePointer(p);
       if (!normalized.isTap) return;
       const dy = SHOOTER_Y - normalized.y;
@@ -180,6 +184,100 @@ export class GameScene extends Phaser.Scene {
   private activateAimAssist(): void {
     this.aimAssistActive = true;
     this.trajectory.setAimAssist(true);
+  }
+
+  private activateColorBomb(): void {
+    if (this.gameOver || this.colorBombPending) return;
+    this.colorBombPending = true;
+    this.showColorPicker();
+  }
+
+  private showColorPicker(): void {
+    const colors = this.levelData.colors;
+    const buttonY = GAME_HEIGHT / 2;
+    const startX = GAME_WIDTH / 2 - ((colors.length - 1) * 50) / 2;
+    const overlay = this.add.rectangle(
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2,
+      GAME_WIDTH,
+      GAME_HEIGHT,
+      0x000000,
+      0.6,
+    ).setDepth(20);
+    const label = this.add.text(
+      GAME_WIDTH / 2,
+      buttonY - 60,
+      'PICK COLOR TO CLEAR',
+      {
+        fontSize: '18px',
+        color: '#ff4081',
+        fontFamily: 'monospace',
+        fontStyle: 'bold',
+      },
+    ).setOrigin(0.5).setDepth(21);
+    const buttons: Phaser.GameObjects.Image[] = [];
+
+    colors.forEach((color, index) => {
+      const button = this.add.image(
+        startX + index * 50,
+        buttonY,
+        getBubbleTextureKey(color),
+      ).setInteractive({ useHandCursor: true }).setDepth(21);
+      buttons.push(button);
+      button.on('pointerdown', () => {
+        overlay.destroy();
+        label.destroy();
+        buttons.forEach((item) => item.destroy());
+        this.executeColorBomb(color);
+      });
+    });
+  }
+
+  private executeColorBomb(targetColor: BubbleColor): void {
+    this.colorBombPending = false;
+    let cleared = 0;
+
+    for (let row = 0; row < this.grid.rows; row++) {
+      for (let col = 0; col < this.grid.getColsForRow(row); col++) {
+        const cell = this.grid.getCell(row, col);
+        if (cell?.color === targetColor && cell.type === 'NORMAL') {
+          this.removeCellSprite(row, col);
+          this.grid.setCell(row, col, null);
+          cleared++;
+        }
+      }
+    }
+
+    if (cleared > 0) {
+      this.score += cleared * COLOR_BOMB_SCORE;
+      this.events.emit('score-update', this.score);
+      this.effects.shakeCamera(cleared);
+      AudioManager.getInstance().playPop();
+    }
+
+    const orphans = this.grid.findOrphans();
+    orphans.forEach(({ row, col }, index) => {
+      const { y } = gridToPixel(row, col);
+      const sprite = this.gridSprites.get(`${row},${col}`);
+      this.grid.setCell(row, col, null);
+      this.gridSprites.delete(`${row},${col}`);
+      if (sprite) {
+        this.tweens.add({
+          targets: sprite,
+          y: y + 500,
+          alpha: 0,
+          angle: Phaser.Math.Between(-90, 90),
+          duration: 500,
+          delay: index * 40,
+          onComplete: () => sprite.destroy(),
+        });
+      }
+    });
+
+    this.score += orphans.length * SCORE_PER_ORPHAN;
+    if (orphans.length > 0) this.events.emit('score-update', this.score);
+    this.events.emit('progress-update', this.grid.countBubbles(), this.totalBubbles);
+    this.advanceTurn();
   }
 
   private loadGridFromLevel(): void {
@@ -554,6 +652,7 @@ export class GameScene extends Phaser.Scene {
       this.timerEvent = null;
     }
     this.events.off('activate-aim-assist', this.activateAimAssist, this);
+    this.events.off('activate-color-bomb', this.activateColorBomb, this);
     AudioManager.getInstance().stopMusic();
     this.scene.stop('UIScene');
   }
