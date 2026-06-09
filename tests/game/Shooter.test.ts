@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type PointerHandler = () => void;
+type PointerHandler = (
+  pointer?: unknown,
+  localX?: number,
+  localY?: number,
+  event?: { stopPropagation: () => void },
+) => void;
 
 const images: Array<{
   x: number;
@@ -101,12 +106,25 @@ describe('Shooter bubble swapping', () => {
     const nextSprite = images.find((image) => image.x === 292)!;
 
     expect(nextSprite.pointerDown).toBeTypeOf('function');
-    nextSprite.pointerDown?.();
+    nextSprite.pointerDown?.(undefined, 0, 0, { stopPropagation: vi.fn() });
 
     expect(shooter.current).toEqual({ color: 'BLUE', type: 'BOMB' });
     expect(shooter.next).toEqual({ color: 'RED', type: 'STONE' });
     expect(activeSprite.setTexture).toHaveBeenLastCalledWith('bubble_BOMB_BLUE');
     expect(nextSprite.setTexture).toHaveBeenLastCalledWith('bubble_STONE_RED');
+  });
+
+  it('stops the NEXT click from reaching the scene fire handler', () => {
+    const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
+    shooter.current = { color: 'RED', type: 'NORMAL' };
+    shooter.next = { color: 'BLUE', type: 'NORMAL' };
+    const nextSprite = images.find((image) => image.x === 292)!;
+    const event = { stopPropagation: vi.fn() };
+
+    nextSprite.pointerDown?.(undefined, 0, 0, event);
+
+    expect(event.stopPropagation).toHaveBeenCalledOnce();
+    expect(shooter.current.color).toBe('BLUE');
   });
 
   it('allows unlimited swaps before firing', () => {
@@ -116,11 +134,11 @@ describe('Shooter bubble swapping', () => {
     const nextSprite = images.find((image) => image.x === 292)!;
 
     expect(nextSprite.pointerDown).toBeTypeOf('function');
-    nextSprite.pointerDown?.();
+    nextSprite.pointerDown?.(undefined, 0, 0, { stopPropagation: vi.fn() });
     expect(shooter.current).toEqual({ color: 'BLUE', type: 'WILDCARD' });
     expect(shooter.next).toEqual({ color: 'RED', type: 'NORMAL' });
 
-    nextSprite.pointerDown?.();
+    nextSprite.pointerDown?.(undefined, 0, 0, { stopPropagation: vi.fn() });
 
     expect(shooter.current).toEqual({ color: 'RED', type: 'NORMAL' });
     expect(shooter.next).toEqual({ color: 'BLUE', type: 'WILDCARD' });
@@ -137,7 +155,7 @@ describe('Shooter bubble swapping', () => {
     const nextAfterFire = shooter.next;
     const nextSprite = images.find((image) => image.x === 292)!;
     expect(nextSprite.pointerDown).toBeTypeOf('function');
-    nextSprite.pointerDown?.();
+    nextSprite.pointerDown?.(undefined, 0, 0, { stopPropagation: vi.fn() });
 
     expect(shooter.current).toEqual(currentAfterFire);
     expect(shooter.next).toEqual(nextAfterFire);

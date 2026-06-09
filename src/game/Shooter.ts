@@ -66,7 +66,18 @@ export class Shooter extends Phaser.Events.EventEmitter {
       SHOOTER_Y + 10,
       getBubbleTextureKey(this.next.color, this.next.type),
     ).setScale(0.75).setInteractive({ useHandCursor: true });
-    this.nextSprite.on('pointerdown', () => this.swapBubbles());
+    this.nextSprite.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
+        this.swapBubbles();
+      },
+    );
     this.scene.add.text(SHOOTER_X + 52, SHOOTER_Y + 28, 'NEXT', {
       fontSize: '10px',
       color: '#8892b0',
