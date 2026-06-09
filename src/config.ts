@@ -1,5 +1,7 @@
 export const GAME_WIDTH = 480;
-export const GAME_HEIGHT = 720;
+export const GAME_HEIGHT = (typeof window !== 'undefined')
+  ? Math.max(720, Math.round(window.innerHeight / window.innerWidth * GAME_WIDTH))
+  : 720;
 export const HUD_HEIGHT = 72;
 
 export const BUBBLE_RADIUS = 22;
