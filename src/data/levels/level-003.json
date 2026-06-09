@@ -1,0 +1,19 @@
+{
+  "id": 3,
+  "name": "Cipher Run",
+  "type": "moves",
+  "moves": 20,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+  "grid": [
+    ["RED", "PURPLE", "BLUE", "PURPLE", "RED", "PURPLE", "BLUE", "RED"],
+    ["PURPLE", "RED", "PURPLE", "BLUE", "PURPLE", "RED", "PURPLE"],
+    ["BLUE", "GREEN", "PURPLE", "GREEN", "PURPLE", "GREEN", "BLUE", "PURPLE"],
+    ["GREEN", "BLUE", "GREEN", "PURPLE", "GREEN", "BLUE", "GREEN"],
+    ["YELLOW", "YELLOW", "GREEN", "GREEN", "BLUE", "BLUE", "YELLOW", "YELLOW"],
+    ["RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW", "RED"],
+    ["PURPLE", "RED", "GREEN", "RED", "GREEN", "RED", "PURPLE", "RED"],
+    ["GREEN", "PURPLE", "BLUE", "PURPLE", "BLUE", "PURPLE", "GREEN"]
+  ],
+  "stars": [1200, 2600, 4400],
+  "descentInterval": 0
+}

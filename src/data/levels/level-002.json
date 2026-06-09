@@ -1,0 +1,18 @@
+{
+  "id": 2,
+  "name": "Shadow Protocol",
+  "type": "moves",
+  "moves": 25,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
+  "grid": [
+    ["RED", "GREEN", "BLUE", "GREEN", "RED", "BLUE", "GREEN", "RED"],
+    ["GREEN", "RED", "GREEN", "BLUE", "GREEN", "RED", "GREEN"],
+    ["BLUE", "BLUE", "RED", "RED", "GREEN", "GREEN", "BLUE", "BLUE"],
+    ["YELLOW", "BLUE", "YELLOW", "RED", "YELLOW", "BLUE", "YELLOW"],
+    ["RED", "YELLOW", "GREEN", "YELLOW", "GREEN", "YELLOW", "RED", "GREEN"],
+    ["GREEN", "RED", "BLUE", "RED", "BLUE", "RED", "GREEN"],
+    ["BLUE", "GREEN", "RED", "GREEN", "RED", "GREEN", "BLUE", "GREEN"]
+  ],
+  "stars": [1000, 2200, 3800],
+  "descentInterval": 0
+}
