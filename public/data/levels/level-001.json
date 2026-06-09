@@ -1,0 +1,16 @@
+{
+  "id": 1,
+  "name": "Operation Neon",
+  "type": "moves",
+  "moves": 30,
+  "colors": ["RED", "BLUE", "YELLOW"],
+  "grid": [
+    ["RED", "BLUE", "RED", "BLUE", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", "RED", "BLUE", "RED", "BLUE", "RED", "BLUE"],
+    ["RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW"],
+    ["YELLOW", "RED", "BLUE", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", "BLUE", "YELLOW", "YELLOW", "RED", "RED", "BLUE", "BLUE"]
+  ],
+  "stars": [800, 1800, 3000],
+  "descentInterval": 0
+}
