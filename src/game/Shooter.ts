@@ -56,7 +56,8 @@ export class Shooter extends Phaser.Events.EventEmitter {
       SHOOTER_X + 52,
       SHOOTER_Y + 10,
       getBubbleTextureKey(this.next.color, this.next.type),
-    ).setScale(0.75);
+    ).setScale(0.75).setInteractive({ useHandCursor: true });
+    this.nextSprite.on('pointerdown', () => this.swapBubbles());
     this.scene.add.text(SHOOTER_X + 52, SHOOTER_Y + 28, 'NEXT', {
       fontSize: '10px',
       color: '#8892b0',
@@ -89,12 +90,27 @@ export class Shooter extends Phaser.Events.EventEmitter {
 
     this.current = this.next;
     this.next = this.randomBubble();
-    this.currentSprite.setTexture(getBubbleTextureKey(this.current.color, this.current.type));
-    this.nextSprite.setTexture(getBubbleTextureKey(this.next.color, this.next.type));
+    this.refreshBubbleTextures();
 
     this.scene.time.delayedCall(SHOOT_COOLDOWN, () => {
       this.cooldown = false;
     });
+  }
+
+  swapBubbles(): void {
+    if (this.cooldown) return;
+
+    [this.current, this.next] = [this.next, this.current];
+    this.refreshBubbleTextures();
+  }
+
+  private refreshBubbleTextures(): void {
+    this.currentSprite.setTexture(
+      getBubbleTextureKey(this.current.color, this.current.type),
+    );
+    this.nextSprite.setTexture(
+      getBubbleTextureKey(this.next.color, this.next.type),
+    );
   }
 
   private randomBubble(): QueuedBubble {
