@@ -127,9 +127,7 @@ export class GameScene extends Phaser.Scene {
 
       this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
         if (this.gameOver || this.colorBombPending) return;
-        const normalized = normalizePointer(p);
-        if (!normalized.isTap) return;
-        const dy = SHOOTER_Y - normalized.y;
+        const dy = SHOOTER_Y - p.y;
         if (dy <= 0) return;
         this.shooter.fire();
       });
