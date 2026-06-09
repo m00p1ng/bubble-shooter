@@ -1,4 +1,4 @@
-import type { BubbleColor } from '../game/Bubble';
+import type { BubbleColor, GridCellData } from '../game/Bubble';
 
 export interface LevelData {
   id: number;
@@ -7,7 +7,13 @@ export interface LevelData {
   moves?: number;
   time?: number;
   colors: BubbleColor[];
-  grid: (BubbleColor | null)[][];
+  grid: GridCellData[][];
   stars: [number, number, number];
   descentInterval: number;
+  specialBubbles?: {
+    stone?: boolean;
+    bomb?: boolean;
+    wildcard?: boolean;
+  };
+  shooterSpecialChance?: number;
 }
