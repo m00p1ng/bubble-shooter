@@ -1,0 +1,16 @@
+{
+  "id": 7,
+  "name": "Nightfall",
+  "type": "timer",
+  "time": 60,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
+  "grid": [
+    ["RED", "BLUE", "GREEN", "YELLOW", "RED", "BLUE", "GREEN", "YELLOW"],
+    ["BLUE", "GREEN", "YELLOW", "RED", "BLUE", "GREEN", "YELLOW"],
+    ["GREEN", "YELLOW", "RED", "BLUE", "GREEN", "YELLOW", "RED", "BLUE"],
+    ["YELLOW", "RED", "BLUE", "GREEN", "YELLOW", "RED", "BLUE"],
+    ["RED", "BLUE", "GREEN", "YELLOW", "RED", "BLUE", "GREEN", "YELLOW"]
+  ],
+  "stars": [1000, 2500, 4000],
+  "descentInterval": 0
+}

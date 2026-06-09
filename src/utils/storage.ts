@@ -31,3 +31,13 @@ export function saveLevelResult(levelId: number, stars: number, score: number): 
   if (stars >= 1) data.unlockedUpTo = Math.max(data.unlockedUpTo, levelId + 1);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
+
+export function getLevelProgress(levelId: number): LevelProgress {
+  const data = loadSave();
+  return data.levels[levelId] ?? { stars: 0, highScore: 0 };
+}
+
+export function isLevelUnlocked(levelId: number): boolean {
+  const data = loadSave();
+  return levelId <= data.unlockedUpTo;
+}

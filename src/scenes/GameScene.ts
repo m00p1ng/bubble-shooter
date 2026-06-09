@@ -29,6 +29,8 @@ export class GameScene extends Phaser.Scene {
   private score = 0;
   private totalBubbles = 0;
   private movesLeft = 0;
+  private timeLeft = 0;
+  private timerEvent: Phaser.Time.TimerEvent | null = null;
   private gameOver = false;
 
   constructor() {
@@ -48,9 +50,21 @@ export class GameScene extends Phaser.Scene {
 
     this.effects = new Effects(this);
     this.totalBubbles = this.grid.countBubbles();
-    this.movesLeft = this.levelData.moves ?? 30;
     this.score = 0;
     this.gameOver = false;
+
+    if (this.levelData.type === 'timer') {
+      this.timeLeft = this.levelData.time ?? 60;
+      this.movesLeft = 0;
+      this.timerEvent = this.time.addEvent({
+        delay: 1000,
+        callback: this.onTimerTick,
+        callbackScope: this,
+        loop: true,
+      });
+    } else {
+      this.movesLeft = this.levelData.moves ?? 30;
+    }
 
     this.shooter = new Shooter(this, this.levelData.colors as BubbleColor[]);
     this.shooter.on('fire', this.onShooterFire, this);
@@ -78,7 +92,11 @@ export class GameScene extends Phaser.Scene {
 
     this.scene.launch('UIScene');
     this.time.delayedCall(50, () => {
-      this.events.emit('moves-update', this.movesLeft);
+      if (this.levelData.type === 'timer') {
+        this.events.emit('timer-update', this.timeLeft);
+      } else {
+        this.events.emit('moves-update', this.movesLeft);
+      }
       this.events.emit('progress-update', this.grid.countBubbles(), this.totalBubbles);
     });
 
@@ -225,7 +243,7 @@ export class GameScene extends Phaser.Scene {
     this.score += matched.length * SCORE_PER_POP;
 
     this.events.emit('score-update', this.score);
-    this.shakeCamera(matched.length);
+    // this.shakeCamera(matched.length);
     this.spawnScoreText(popX, popY, matched.length * SCORE_PER_POP);
 
     const orphans = this.grid.findOrphans();
@@ -285,13 +303,29 @@ export class GameScene extends Phaser.Scene {
 
   private advanceTurn(): void {
     if (this.gameOver) return;
-    this.movesLeft--;
-    this.events.emit('moves-update', this.movesLeft);
 
-    if (this.grid.isEmpty()) {
-      this.triggerWin();
-    } else if (this.movesLeft <= 0) {
-      this.triggerLose('no_moves');
+    if (this.levelData.type === 'moves') {
+      this.movesLeft--;
+      this.events.emit('moves-update', this.movesLeft);
+
+      if (this.grid.isEmpty()) {
+        this.triggerWin();
+      } else if (this.movesLeft <= 0) {
+        this.triggerLose('no_moves');
+      }
+    } else {
+      if (this.grid.isEmpty()) {
+        this.triggerWin();
+      }
+    }
+  }
+
+  private onTimerTick(): void {
+    if (this.gameOver) return;
+    this.timeLeft--;
+    this.events.emit('timer-update', this.timeLeft);
+    if (this.timeLeft <= 0) {
+      this.triggerLose('timeout');
     }
   }
 
@@ -341,22 +375,37 @@ export class GameScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(11);
     }
 
-    const nextId = this.levelId < 3 ? this.levelId + 1 : null;
-    const btnLabel = won && nextId ? 'NEXT MISSION' : 'RETRY';
-    const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90,
-      `[ ${btnLabel} ]`,
-      { fontSize: '20px', color: '#69f0ae', fontFamily: 'monospace' },
-    ).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+    const mapBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, '[ MAP ]', {
+      fontSize: '18px', color: '#c0c8ff', fontFamily: 'monospace',
+    }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
 
-    btn.on('pointerdown', () => {
-      if (won && nextId) {
-        this.registry.set('currentLevel', nextId);
+    mapBtn.on('pointerdown', () => {
+      import('../utils/transition').then(({ fadeOutAndStart }) => {
+        fadeOutAndStart(this, 'MapScene', { stopScenes: ['UIScene'] });
+      });
+    });
+
+    const hasNext = won && this.levelId < 10;
+    const actionLabel = hasNext ? '[ NEXT MISSION ]' : '[ RETRY ]';
+    const actionBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 120, actionLabel, {
+      fontSize: '18px', color: '#69f0ae', fontFamily: 'monospace',
+    }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+
+    actionBtn.on('pointerdown', () => {
+      if (hasNext) {
+        this.registry.set('currentLevel', this.levelId + 1);
       }
-      this.scene.restart();
+      import('../utils/transition').then(({ fadeOutAndStart }) => {
+        fadeOutAndStart(this, 'GameScene', { stopScenes: ['UIScene'] });
+      });
     });
   }
 
   shutdown(): void {
+    if (this.timerEvent) {
+      this.timerEvent.remove();
+      this.timerEvent = null;
+    }
     this.scene.stop('UIScene');
   }
 }

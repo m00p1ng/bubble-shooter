@@ -30,6 +30,8 @@ export class UIScene extends Phaser.Scene {
     this.progressBar = this.add.graphics();
     this.drawProgressBar(1);
 
+    this.createPauseButton();
+
     game.events.on('score-update', (s: number) => {
       this.score = s;
       this.animateScore();
@@ -40,8 +42,51 @@ export class UIScene extends Phaser.Scene {
       if (m <= 5) this.movesTxt.setColor('#ff4081');
     });
 
+    game.events.on('timer-update', (t: number) => {
+      this.movesTxt.setText(`TIME: ${t}`);
+      if (t <= 10) this.movesTxt.setColor('#ff4081');
+    });
+
     game.events.on('progress-update', (remaining: number, total: number) => {
       this.drawProgressBar(remaining / total);
+    });
+  }
+
+  private createPauseButton(): void {
+    const btn = this.add
+      .text(GAME_WIDTH - 16, 48, '||', {
+        fontSize: '16px',
+        color: '#c0c8ff',
+        fontFamily: 'monospace',
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true });
+
+    btn.on('pointerdown', () => {
+      this.scene.get('GameScene').scene.pause();
+      this.showPauseOverlay();
+    });
+  }
+
+  private showPauseOverlay(): void {
+    const overlay = this.add.rectangle(
+      this.scale.width / 2, this.scale.height / 2,
+      this.scale.width, this.scale.height,
+      0x000000, 0.7,
+    ).setDepth(100);
+
+    const resume = this.add
+      .text(this.scale.width / 2, this.scale.height / 2, 'RESUME', {
+        fontSize: '24px', color: '#69f0ae', fontFamily: 'monospace',
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(101);
+
+    resume.on('pointerdown', () => {
+      overlay.destroy();
+      resume.destroy();
+      this.scene.get('GameScene').scene.resume();
     });
   }
 

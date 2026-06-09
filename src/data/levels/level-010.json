@@ -1,0 +1,19 @@
+{
+  "id": 10,
+  "name": "Final Extraction",
+  "type": "moves",
+  "moves": 15,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "CYAN"],
+  "grid": [
+    ["CYAN", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE"],
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE", "RED", "GREEN"],
+    ["GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE", "RED", "GREEN"],
+    ["BLUE", "YELLOW", "CYAN", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["YELLOW", "CYAN", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["CYAN", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE"],
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "PURPLE"]
+  ],
+  "stars": [2500, 5500, 9000],
+  "descentInterval": 0
+}

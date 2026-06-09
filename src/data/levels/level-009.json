@@ -1,0 +1,19 @@
+{
+  "id": 9,
+  "name": "Silent Protocol",
+  "type": "moves",
+  "moves": 18,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+  "grid": [
+    ["GREEN", "YELLOW", "PURPLE", "RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+    ["YELLOW", "PURPLE", "RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+    ["PURPLE", "RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "RED", "BLUE"],
+    ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "RED", "BLUE"],
+    ["BLUE", "GREEN", "YELLOW", "PURPLE", "RED", "BLUE", "GREEN", "YELLOW"],
+    ["GREEN", "YELLOW", "PURPLE", "RED", "BLUE", "GREEN", "YELLOW"],
+    ["YELLOW", "PURPLE", "RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "RED"],
+    ["PURPLE", "RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "RED"]
+  ],
+  "stars": [2000, 4500, 7200],
+  "descentInterval": 0
+}

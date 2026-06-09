@@ -1,0 +1,17 @@
+{
+  "id": 6,
+  "name": "Red Ledger",
+  "type": "moves",
+  "moves": 25,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+  "grid": [
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN"],
+    ["GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["BLUE", "YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED"],
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED"]
+  ],
+  "stars": [1500, 3500, 5800],
+  "descentInterval": 0
+}

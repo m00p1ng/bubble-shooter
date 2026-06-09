@@ -1,0 +1,19 @@
+{
+  "id": 5,
+  "name": "Ghost Signal",
+  "type": "moves",
+  "moves": 20,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
+  "grid": [
+    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
+    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
+    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
+    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
+    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
+    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"]
+  ],
+  "stars": [1400, 3200, 5200],
+  "descentInterval": 0
+}

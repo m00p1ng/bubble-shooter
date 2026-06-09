@@ -1,0 +1,18 @@
+{
+  "id": 8,
+  "name": "Dead Drop",
+  "type": "moves",
+  "moves": 20,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE"],
+  "grid": [
+    ["YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED"],
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN", "BLUE"],
+    ["GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN", "BLUE"],
+    ["BLUE", "YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE"],
+    ["YELLOW", "PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE"],
+    ["PURPLE", "RED", "GREEN", "BLUE", "YELLOW", "PURPLE", "RED", "GREEN"]
+  ],
+  "stars": [1800, 4000, 6500],
+  "descentInterval": 0
+}

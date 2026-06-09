@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { MenuScene } from './scenes/MenuScene';
+import { MapScene } from './scenes/MapScene';
 import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { GAME_WIDTH, GAME_HEIGHT } from './config';
@@ -13,5 +15,5 @@ new Phaser.Game({
     default: 'arcade',
     arcade: { gravity: { x: 0, y: 0 }, debug: false },
   },
-  scene: [BootScene, GameScene, UIScene],
+  scene: [BootScene, MenuScene, MapScene, GameScene, UIScene],
 });

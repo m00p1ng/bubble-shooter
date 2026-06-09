@@ -8,9 +8,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.json('level-1', 'data/levels/level-001.json');
-    this.load.json('level-2', 'data/levels/level-002.json');
-    this.load.json('level-3', 'data/levels/level-003.json');
+    for (let i = 1; i <= 10; i++) {
+      const id = i.toString().padStart(3, '0');
+      this.load.json(`level-${i}`, `data/levels/level-${id}.json`);
+    }
 
     const bar = this.add.graphics();
     this.load.on('progress', (v: number) => {
@@ -23,8 +24,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.generateBubbleTextures();
     this.generateShooterTexture();
-    this.registry.set('currentLevel', 1);
-    this.scene.start('GameScene');
+    this.scene.start('MenuScene');
   }
 
   private generateBubbleTextures(): void {

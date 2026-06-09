@@ -1,0 +1,18 @@
+{
+  "id": 4,
+  "name": "Deep Cover",
+  "type": "moves",
+  "moves": 25,
+  "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
+  "grid": [
+    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"],
+    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"],
+    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
+    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"]
+  ],
+  "stars": [1200, 2800, 4500],
+  "descentInterval": 0
+}
