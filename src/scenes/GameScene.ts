@@ -48,6 +48,7 @@ export class GameScene extends Phaser.Scene {
   private timeLeft = 0;
   private timerEvent: Phaser.Time.TimerEvent | null = null;
   private gameOver = false;
+  private aimAssistActive = false;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -97,6 +98,7 @@ export class GameScene extends Phaser.Scene {
     this.shooter.on('fire', this.onShooterFire, this);
 
     this.trajectory = new Trajectory(this);
+    this.events.on('activate-aim-assist', this.activateAimAssist, this);
 
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       const dx = p.x - SHOOTER_X;
@@ -173,6 +175,11 @@ export class GameScene extends Phaser.Scene {
     const line = this.add.graphics();
     line.lineStyle(1, 0xff4081, 0.3);
     line.lineBetween(0, DANGER_LINE_Y, GAME_WIDTH, DANGER_LINE_Y);
+  }
+
+  private activateAimAssist(): void {
+    this.aimAssistActive = true;
+    this.trajectory.setAimAssist(true);
   }
 
   private loadGridFromLevel(): void {
@@ -546,6 +553,7 @@ export class GameScene extends Phaser.Scene {
       this.timerEvent.remove();
       this.timerEvent = null;
     }
+    this.events.off('activate-aim-assist', this.activateAimAssist, this);
     AudioManager.getInstance().stopMusic();
     this.scene.stop('UIScene');
   }

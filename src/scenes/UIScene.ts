@@ -33,6 +33,7 @@ export class UIScene extends Phaser.Scene {
 
     this.createPauseButton();
     this.createMuteButton();
+    this.createPowerUpButtons();
 
     game.events.on('score-update', (s: number) => {
       this.score = s;
@@ -90,6 +91,35 @@ export class UIScene extends Phaser.Scene {
     btn.on('pointerdown', () => {
       this.scene.get('GameScene').scene.pause();
       this.showPauseOverlay();
+    });
+  }
+
+  private createPowerUpButtons(): void {
+    const y = 80;
+    const aimButton = this.add.text(GAME_WIDTH / 2 - 50, y, 'AIM', {
+      fontSize: '12px',
+      color: '#69f0ae',
+      fontFamily: 'monospace',
+      backgroundColor: '#1a2540',
+    }).setPadding(6, 4).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    aimButton.on('pointerdown', () => {
+      this.scene.get('GameScene').events.emit('activate-aim-assist');
+      aimButton.setAlpha(0.3);
+      aimButton.disableInteractive();
+    });
+
+    const colorBombButton = this.add.text(GAME_WIDTH / 2 + 50, y, 'BOMB', {
+      fontSize: '12px',
+      color: '#ff4081',
+      fontFamily: 'monospace',
+      backgroundColor: '#1a2540',
+    }).setPadding(6, 4).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    colorBombButton.on('pointerdown', () => {
+      this.scene.get('GameScene').events.emit('activate-color-bomb');
+      colorBombButton.setAlpha(0.3);
+      colorBombButton.disableInteractive();
     });
   }
 
