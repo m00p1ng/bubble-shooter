@@ -1,18 +1,22 @@
 {
   "id": 4,
-  "name": "Deep Cover",
+  "name": "Operation Granite",
   "type": "moves",
-  "moves": 25,
+  "moves": 35,
   "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
   "grid": [
-    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
-    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
-    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"],
-    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"],
-    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
-    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW"],
-    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN"]
+    ["RED", "BLUE", { "type": "STONE", "color": "RED" }, "GREEN", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", "RED", "GREEN", "RED", "BLUE", "RED", "BLUE"],
+    ["RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW"],
+    ["YELLOW", "RED", "BLUE", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", { "type": "STONE", "color": "BLUE" }, "YELLOW", "YELLOW", "RED", "RED", "BLUE", "BLUE"]
   ],
-  "stars": [1200, 2800, 4500],
-  "descentInterval": 0
+  "stars": [1000, 2200, 3500],
+  "descentInterval": 0,
+  "specialBubbles": {
+    "stone": true,
+    "bomb": false,
+    "wildcard": false
+  },
+  "shooterSpecialChance": 0
 }

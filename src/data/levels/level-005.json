@@ -1,19 +1,22 @@
 {
   "id": 5,
-  "name": "Ghost Signal",
+  "name": "Operation Wildcard",
   "type": "moves",
-  "moves": 20,
-  "colors": ["RED", "BLUE", "GREEN", "YELLOW"],
+  "moves": 30,
+  "colors": ["RED", "BLUE", "YELLOW", "PURPLE"],
   "grid": [
-    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
-    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
-    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
-    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
-    ["YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
-    ["RED", "GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE"],
-    ["GREEN", "BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"],
-    ["BLUE", "YELLOW", "RED", "GREEN", "BLUE", "YELLOW", "RED"]
+    ["RED", "BLUE", { "type": "WILDCARD" }, "YELLOW", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", "RED", "YELLOW", "RED", "BLUE", "RED", "BLUE"],
+    ["RED", { "type": "BOMB", "color": "RED" }, "RED", "YELLOW", "RED", "YELLOW", "RED", "YELLOW"],
+    ["YELLOW", "RED", "BLUE", "RED", "BLUE", "RED", "BLUE"],
+    ["BLUE", "BLUE", "YELLOW", "YELLOW", "RED", "RED", "BLUE", "BLUE"]
   ],
-  "stars": [1400, 3200, 5200],
-  "descentInterval": 0
+  "stars": [1200, 2600, 4200],
+  "descentInterval": 0,
+  "specialBubbles": {
+    "stone": true,
+    "bomb": true,
+    "wildcard": true
+  },
+  "shooterSpecialChance": 0.1
 }
