@@ -5,6 +5,7 @@ import { gridToPixel, pixelToNearestGrid, getNeighbors } from '../utils/hexUtils
 import { Trajectory } from '../game/Trajectory';
 import { Shooter } from '../game/Shooter';
 import { saveLevelResult } from '../utils/storage';
+import { Effects } from '../game/Effects';
 import {
   GRID_COLS, GRID_ROWS, GAME_WIDTH, GAME_HEIGHT,
   SHOOTER_X, SHOOTER_Y, DANGER_LINE_Y,
@@ -24,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   private trajectory!: Trajectory;
   private shooter!: Shooter;
   private flyingBubbles: FlyingBubble[] = [];
+  private effects!: Effects;
   private score = 0;
   private totalBubbles = 0;
   private movesLeft = 0;
@@ -44,6 +46,7 @@ export class GameScene extends Phaser.Scene {
     this.loadGridFromLevel();
     this.renderGrid();
 
+    this.effects = new Effects(this);
     this.totalBubbles = this.grid.countBubbles();
     this.movesLeft = this.levelData.moves ?? 30;
     this.score = 0;
@@ -255,6 +258,8 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.gridSprites.get(`${row},${col}`);
     if (!sprite) return;
     this.gridSprites.delete(`${row},${col}`);
+    const cell = this.grid.getCell(row, col);
+    if (cell?.color) this.effects.popBurst(sprite.x, sprite.y, cell.color);
     sprite.destroy();
   }
 
