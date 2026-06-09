@@ -1,9 +1,14 @@
-import type { BubbleColor } from './Bubble';
+import {
+  DEFAULT_HIT_POINTS,
+  parseGridCellData,
+  type BubbleColor,
+  type BubbleType,
+  type GridCell,
+  type GridCellData,
+} from './Bubble';
 import { GRID_COLS, GRID_ROWS } from '../config';
 
-export interface GridCell {
-  color: BubbleColor | null;
-}
+export type { GridCell } from './Bubble';
 
 export class Grid {
   private cells: (GridCell | null)[][];
@@ -14,8 +19,12 @@ export class Grid {
     this.rows = rows;
     this.cols = cols;
     this.cells = Array.from({ length: rows }, (_, r) =>
-      Array.from({ length: this.getColsForRow(r) }, () => ({ color: null })),
+      Array.from({ length: this.getColsForRow(r) }, () => this.emptyCell()),
     );
+  }
+
+  private emptyCell(): GridCell {
+    return { color: null, type: 'NORMAL', hitPoints: DEFAULT_HIT_POINTS.NORMAL };
   }
 
   getColsForRow(row: number): number {
@@ -27,18 +36,33 @@ export class Grid {
     return this.cells[row][col];
   }
 
-  setCell(row: number, col: number, color: BubbleColor | null): void {
+  setCell(
+    row: number,
+    col: number,
+    color: BubbleColor | null,
+    type: BubbleType = 'NORMAL',
+  ): void {
     if (row < 0 || row >= this.rows || col < 0 || col >= this.getColsForRow(row)) return;
-    this.cells[row][col] = { color };
+    this.cells[row][col] = { color, type, hitPoints: DEFAULT_HIT_POINTS[type] };
   }
 
-  loadFromData(data: (BubbleColor | null)[][]): void {
+  loadFromData(data: GridCellData[][]): void {
     data.forEach((rowData, r) => {
       if (r >= this.rows) return;
-      rowData.forEach((color, c) => {
-        if (c < this.getColsForRow(r)) this.cells[r][c] = { color };
+      rowData.forEach((cellData, c) => {
+        if (c < this.getColsForRow(r)) {
+          this.cells[r][c] = parseGridCellData(cellData) ?? this.emptyCell();
+        }
       });
     });
+  }
+
+  damageCell(row: number, col: number): void {
+    const cell = this.getCell(row, col);
+    if (!cell?.color) return;
+
+    cell.hitPoints--;
+    if (cell.hitPoints <= 0) this.cells[row][col] = this.emptyCell();
   }
 
   private getNeighbors(row: number, col: number): Array<{ row: number; col: number }> {
@@ -66,10 +90,14 @@ export class Grid {
     });
   }
 
-  findMatch(row: number, col: number): Array<{ row: number; col: number }> {
+  findMatch(
+    row: number,
+    col: number,
+    effectiveColor?: BubbleColor,
+  ): Array<{ row: number; col: number }> {
     const cell = this.getCell(row, col);
-    if (!cell?.color) return [];
-    const target = cell.color;
+    if (!cell?.color || cell.type === 'STONE') return [];
+    const target = effectiveColor ?? cell.color;
     const visited = new Set<string>();
     const queue: Array<{ row: number; col: number }> = [{ row, col }];
     const result: Array<{ row: number; col: number }> = [];
@@ -79,12 +107,62 @@ export class Grid {
       const key = `${cur.row},${cur.col}`;
       if (visited.has(key)) continue;
       visited.add(key);
-      if (this.getCell(cur.row, cur.col)?.color !== target) continue;
+      const currentCell = this.getCell(cur.row, cur.col);
+      if (!currentCell?.color || currentCell.type === 'STONE') continue;
+      if (currentCell.type !== 'WILDCARD' && currentCell.color !== target) continue;
       result.push(cur);
       for (const n of this.getNeighbors(cur.row, cur.col)) {
         if (!visited.has(`${n.row},${n.col}`)) queue.push(n);
       }
     }
+    return result;
+  }
+
+  findBestWildcardMatch(row: number, col: number): Array<{ row: number; col: number }> {
+    const colors = new Set<BubbleColor>();
+
+    for (const neighbor of this.getNeighbors(row, col)) {
+      const cell = this.getCell(neighbor.row, neighbor.col);
+      if (cell?.color && cell.type !== 'STONE' && cell.type !== 'WILDCARD') {
+        colors.add(cell.color);
+      }
+    }
+
+    let bestMatch: Array<{ row: number; col: number }> = [];
+    for (const color of colors) {
+      const match = this.findMatch(row, col, color);
+      if (match.length > bestMatch.length) bestMatch = match;
+    }
+
+    return bestMatch.length > 0 ? bestMatch : [{ row, col }];
+  }
+
+  getCellsInRadius(
+    row: number,
+    col: number,
+    radius: number,
+  ): Array<{ row: number; col: number }> {
+    if (!this.getCell(row, col)) return [];
+
+    const result: Array<{ row: number; col: number }> = [{ row, col }];
+    const visited = new Set([`${row},${col}`]);
+    const queue: Array<{ row: number; col: number; distance: number }> = [
+      { row, col, distance: 0 },
+    ];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (current.distance >= radius) continue;
+
+      for (const neighbor of this.getNeighbors(current.row, current.col)) {
+        const key = `${neighbor.row},${neighbor.col}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+        result.push(neighbor);
+        queue.push({ ...neighbor, distance: current.distance + 1 });
+      }
+    }
+
     return result;
   }
 
