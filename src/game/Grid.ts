@@ -250,4 +250,14 @@ export class Grid {
   isEmpty(): boolean {
     return this.countBubbles() === 0;
   }
+
+  getActiveColors(): BubbleColor[] {
+    const colors = new Set<BubbleColor>();
+    for (let r = 0; r < this.rows; r++)
+      for (let c = 0; c < this.getColsForRow(r); c++) {
+        const color = this.cells[r][c]?.color;
+        if (color) colors.add(color);
+      }
+    return [...colors];
+  }
 }

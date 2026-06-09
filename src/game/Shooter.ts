@@ -31,7 +31,7 @@ export class Shooter extends Phaser.Events.EventEmitter {
 
   constructor(
     private scene: Phaser.Scene,
-    private availableColors: BubbleColor[],
+    private getColors: () => BubbleColor[],
     private specialTypes: BubbleType[] = [],
     private specialChance = 0,
   ) {
@@ -134,7 +134,8 @@ export class Shooter extends Phaser.Events.EventEmitter {
   }
 
   private randomBubble(): QueuedBubble {
-    const color = this.availableColors[Math.floor(Math.random() * this.availableColors.length)];
+    const colors = this.getColors();
+    const color = colors[Math.floor(Math.random() * colors.length)];
     if (this.specialTypes.length > 0 && Math.random() < this.specialChance) {
       const type = this.specialTypes[Math.floor(Math.random() * this.specialTypes.length)];
       return { color, type };

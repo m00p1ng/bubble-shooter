@@ -97,7 +97,7 @@ describe('Shooter bubble swapping', () => {
   });
 
   it('clicking NEXT swaps complete queued bubbles and refreshes textures', () => {
-    const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
+    const shooter = new Shooter(createScene() as never, () => ['RED', 'BLUE']);
     shooter.current = { color: 'RED', type: 'STONE' };
     shooter.next = { color: 'BLUE', type: 'BOMB' };
     const activeSprite = images.find(
@@ -115,7 +115,7 @@ describe('Shooter bubble swapping', () => {
   });
 
   it('stops the NEXT click from reaching the scene fire handler', () => {
-    const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
+    const shooter = new Shooter(createScene() as never, () => ['RED', 'BLUE']);
     shooter.current = { color: 'RED', type: 'NORMAL' };
     shooter.next = { color: 'BLUE', type: 'NORMAL' };
     const nextSprite = images.find((image) => image.x === 292)!;
@@ -128,7 +128,7 @@ describe('Shooter bubble swapping', () => {
   });
 
   it('allows unlimited swaps before firing', () => {
-    const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
+    const shooter = new Shooter(createScene() as never, () => ['RED', 'BLUE']);
     shooter.current = { color: 'RED', type: 'NORMAL' };
     shooter.next = { color: 'BLUE', type: 'WILDCARD' };
     const nextSprite = images.find((image) => image.x === 292)!;
@@ -146,7 +146,7 @@ describe('Shooter bubble swapping', () => {
 
   it('ignores swaps during post-fire cooldown', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    const shooter = new Shooter(createScene() as never, ['RED', 'BLUE']);
+    const shooter = new Shooter(createScene() as never, () => ['RED', 'BLUE']);
     shooter.current = { color: 'RED', type: 'NORMAL' };
     shooter.next = { color: 'BLUE', type: 'BOMB' };
 
@@ -162,7 +162,7 @@ describe('Shooter bubble swapping', () => {
   });
 
   it('creates and destroys the energy cradle with the shooter', () => {
-    const shooter = new Shooter(createScene() as never, ['RED']);
+    const shooter = new Shooter(createScene() as never, () => ['RED']);
     const cradle = images.find((image) => image.texture === 'shooter_cradle');
 
     expect(cradle).toBeDefined();

@@ -94,7 +94,10 @@ export class GameScene extends Phaser.Scene {
     const specialChance = this.levelData.shooterSpecialChance ?? 0;
     this.shooter = new Shooter(
       this,
-      this.levelData.colors,
+      () => {
+        const active = this.grid.getActiveColors();
+        return active.length > 0 ? active : this.levelData.colors;
+      },
       specialTypes,
       specialChance,
     );
@@ -104,26 +107,45 @@ export class GameScene extends Phaser.Scene {
     this.events.on('activate-aim-assist', this.activateAimAssist, this);
     this.events.on('activate-color-bomb', this.activateColorBomb, this);
 
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      const dx = p.x - SHOOTER_X;
-      const dy = SHOOTER_Y - p.y;
+    const updateAim = (x: number, y: number) => {
+      const dx = x - SHOOTER_X;
+      const dy = SHOOTER_Y - y;
       if (dy <= 0) return;
       const angle = Math.atan2(dx, dy);
       this.shooter.setAimAngle(angle);
       this.trajectory.update(angle);
+    };
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      updateAim(p.x, p.y);
     });
 
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (this.gameOver || this.colorBombPending) return;
-      const normalized = normalizePointer(p);
-      if (!normalized.isTap) return;
-      const dy = SHOOTER_Y - normalized.y;
-      if (dy <= 0) return;
-      const dx = normalized.x - SHOOTER_X;
-      const angle = Math.atan2(dx, dy);
-      this.shooter.setAimAngle(angle);
-      this.shooter.fire();
-    });
+    if (isMobile()) {
+      this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+        updateAim(p.x, p.y);
+      });
+
+      this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+        if (this.gameOver || this.colorBombPending) return;
+        const normalized = normalizePointer(p);
+        if (!normalized.isTap) return;
+        const dy = SHOOTER_Y - normalized.y;
+        if (dy <= 0) return;
+        this.shooter.fire();
+      });
+    } else {
+      this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+        if (this.gameOver || this.colorBombPending) return;
+        const normalized = normalizePointer(p);
+        if (!normalized.isTap) return;
+        const dy = SHOOTER_Y - normalized.y;
+        if (dy <= 0) return;
+        const dx = normalized.x - SHOOTER_X;
+        const angle = Math.atan2(dx, dy);
+        this.shooter.setAimAngle(angle);
+        this.shooter.fire();
+      });
+    }
 
     this.scene.launch('UIScene');
     this.time.delayedCall(50, () => {
@@ -224,7 +246,13 @@ export class GameScene extends Phaser.Scene {
         getBubbleTextureKey(color),
       ).setInteractive({ useHandCursor: true }).setDepth(21);
       buttons.push(button);
-      button.on('pointerdown', () => {
+      button.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
         overlay.destroy();
         label.destroy();
         buttons.forEach((item) => item.destroy());
