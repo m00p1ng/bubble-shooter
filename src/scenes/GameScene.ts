@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { Grid } from '../game/Grid';
-import { getBubbleTextureKey, getShooterTextureKey } from '../game/Bubble';
+import { getBubbleTextureKey } from '../game/Bubble';
 import { gridToPixel } from '../utils/hexUtils';
 import { Trajectory } from '../game/Trajectory';
+import { Shooter } from '../game/Shooter';
 import {
   GRID_COLS, GRID_ROWS, GAME_WIDTH, GAME_HEIGHT,
   SHOOTER_X, SHOOTER_Y, DANGER_LINE_Y,
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private levelData!: LevelData;
   private levelId!: number;
   private trajectory!: Trajectory;
+  private shooter!: Shooter;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -31,15 +33,28 @@ export class GameScene extends Phaser.Scene {
     this.drawBackground();
     this.loadGridFromLevel();
     this.renderGrid();
-    this.drawShooter();
+
+    this.shooter = new Shooter(this, this.levelData.colors as BubbleColor[]);
+    this.shooter.on('fire', this.onShooterFire, this);
 
     this.trajectory = new Trajectory(this);
+
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       const dx = p.x - SHOOTER_X;
       const dy = SHOOTER_Y - p.y;
       if (dy <= 0) return;
       const angle = Math.atan2(dx, dy);
+      this.shooter.setAimAngle(angle);
       this.trajectory.update(angle);
+    });
+
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      const dy = SHOOTER_Y - p.y;
+      if (dy <= 0) return;
+      const dx = p.x - SHOOTER_X;
+      const angle = Math.atan2(dx, dy);
+      this.shooter.setAimAngle(angle);
+      this.shooter.fire();
     });
   }
 
@@ -70,7 +85,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private drawShooter(): void {
-    this.add.image(SHOOTER_X, SHOOTER_Y, getShooterTextureKey()).setAngle(180);
+  private onShooterFire(color: BubbleColor, angle: number): void {
+    // Flying bubble spawn — implemented in Task 9
+    console.log('fire', color, angle);
   }
 }
