@@ -48,3 +48,14 @@ export const BUBBLE_IDLE_PULSE_DELAY_VARIANCE = 400;
 
 // Mobile
 export const TOUCH_DRAG_THRESHOLD = 10;
+
+// Special bubbles
+export const STONE_HIT_POINTS = 2;
+export const BOMB_RADIUS = 2;
+
+// Power-ups
+export const AIM_ASSIST_EXTRA_BOUNCES = 3;
+export const COLOR_BOMB_SCORE = 50;
+
+// Shooter special bubble chance (0-1)
+export const DEFAULT_SHOOTER_SPECIAL_CHANCE = 0.15;

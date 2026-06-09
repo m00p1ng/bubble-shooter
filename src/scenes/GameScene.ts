@@ -20,6 +20,7 @@ import {
   BUBBLE_SPEED, BUBBLE_RADIUS, GRID_ORIGIN_Y,
   MATCH_MIN, SCORE_PER_POP, SCORE_PER_ORPHAN,
   BUBBLE_IDLE_PULSE_SCALE, BUBBLE_IDLE_PULSE_DURATION, BUBBLE_IDLE_PULSE_DELAY_VARIANCE,
+  BOMB_RADIUS,
 } from '../config';
 import type { LevelData } from '../types/LevelData';
 import type { BubbleColor, BubbleType } from '../game/Bubble';
@@ -175,7 +176,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadGridFromLevel(): void {
-    this.grid.loadFromData(this.levelData.grid as (BubbleColor | null)[][]);
+    this.grid.loadFromData(this.levelData.grid);
   }
 
   renderGrid(): void {
@@ -187,7 +188,7 @@ export class GameScene extends Phaser.Scene {
         const cell = this.grid.getCell(r, c);
         if (!cell?.color) continue;
         const { x, y } = gridToPixel(r, c);
-        const sprite = this.add.image(x, y, getBubbleTextureKey(cell.color));
+        const sprite = this.add.image(x, y, getBubbleTextureKey(cell.color, cell.type));
         this.gridSprites.set(`${r},${c}`, sprite);
         this.addIdleAnimation(sprite);
         if (isMobile()) {
@@ -321,8 +322,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private processMatch(row: number, col: number): void {
-    const matched = this.grid.findMatch(row, col);
-    if (matched.length < MATCH_MIN) {
+    const cell = this.grid.getCell(row, col);
+    if (!cell?.color) {
+      this.advanceTurn();
+      return;
+    }
+
+    let matched: Array<{ row: number; col: number }>;
+    if (cell.type === 'BOMB') {
+      matched = this.grid.getCellsInRadius(row, col, BOMB_RADIUS);
+    } else if (cell.type === 'WILDCARD') {
+      matched = this.grid.findBestWildcardMatch(row, col);
+    } else {
+      matched = this.grid.findMatch(row, col);
+    }
+
+    if (matched.length < MATCH_MIN && cell.type !== 'BOMB') {
       this.advanceTurn();
       return;
     }
@@ -330,16 +345,42 @@ export class GameScene extends Phaser.Scene {
     const popX = matched.reduce((s, c) => s + gridToPixel(c.row, c.col).x, 0) / matched.length;
     const popY = matched.reduce((s, c) => s + gridToPixel(c.row, c.col).y, 0) / matched.length;
 
+    let poppedCount = 0;
     matched.forEach(({ row: r, col: c }) => {
+      const targetCell = this.grid.getCell(r, c);
+      if (!targetCell?.color) return;
+
+      if (targetCell.type === 'STONE') {
+        this.grid.damageCell(r, c);
+        if (this.grid.getCell(r, c)?.color) {
+          const sprite = this.gridSprites.get(`${r},${c}`);
+          if (sprite) {
+            this.tweens.add({
+              targets: sprite,
+              alpha: 0.4,
+              duration: 80,
+              yoyo: true,
+            });
+          }
+        } else {
+          this.removeCellSprite(r, c, targetCell.color);
+          poppedCount++;
+        }
+        return;
+      }
+
       this.removeCellSprite(r, c);
       this.grid.setCell(r, c, null);
+      poppedCount++;
     });
-    this.score += matched.length * SCORE_PER_POP;
-    AudioManager.getInstance().playPop();
 
-    this.events.emit('score-update', this.score);
-    this.effects.shakeCamera(matched.length);
-    this.spawnScoreText(popX, popY, matched.length * SCORE_PER_POP);
+    this.score += poppedCount * SCORE_PER_POP;
+    if (poppedCount > 0) {
+      AudioManager.getInstance().playPop();
+      this.events.emit('score-update', this.score);
+      this.effects.shakeCamera(poppedCount);
+      this.spawnScoreText(popX, popY, poppedCount * SCORE_PER_POP);
+    }
 
     const orphans = this.grid.findOrphans();
     orphans.forEach(({ row: r, col: c }, idx) => {
@@ -368,12 +409,17 @@ export class GameScene extends Phaser.Scene {
     this.advanceTurn();
   }
 
-  private removeCellSprite(row: number, col: number): void {
+  private removeCellSprite(
+    row: number,
+    col: number,
+    effectColor?: BubbleColor,
+  ): void {
     const sprite = this.gridSprites.get(`${row},${col}`);
     if (!sprite) return;
     this.gridSprites.delete(`${row},${col}`);
     const cell = this.grid.getCell(row, col);
-    if (cell?.color) this.effects.popBurst(sprite.x, sprite.y, cell.color);
+    const color = effectColor ?? cell?.color;
+    if (color) this.effects.popBurst(sprite.x, sprite.y, color);
     sprite.destroy();
   }
 
