@@ -22,9 +22,14 @@ import {
   BUBBLE_IDLE_PULSE_SCALE, BUBBLE_IDLE_PULSE_DURATION, BUBBLE_IDLE_PULSE_DELAY_VARIANCE,
 } from '../config';
 import type { LevelData } from '../types/LevelData';
-import type { BubbleColor } from '../game/Bubble';
+import type { BubbleColor, BubbleType } from '../game/Bubble';
 
-type FlyingBubble = Phaser.GameObjects.Image & { vx: number; vy: number; bubbleColor: BubbleColor };
+type FlyingBubble = Phaser.GameObjects.Image & {
+  vx: number;
+  vy: number;
+  bubbleColor: BubbleColor;
+  bubbleType: BubbleType;
+};
 type SnapResult = { row: number; col: number } | 'overflow' | null;
 
 export class GameScene extends Phaser.Scene {
@@ -77,7 +82,17 @@ export class GameScene extends Phaser.Scene {
       this.movesLeft = this.levelData.moves ?? 30;
     }
 
-    this.shooter = new Shooter(this, this.levelData.colors as BubbleColor[]);
+    const specialTypes: BubbleType[] = [];
+    if (this.levelData.specialBubbles?.stone) specialTypes.push('STONE');
+    if (this.levelData.specialBubbles?.bomb) specialTypes.push('BOMB');
+    if (this.levelData.specialBubbles?.wildcard) specialTypes.push('WILDCARD');
+    const specialChance = this.levelData.shooterSpecialChance ?? 0;
+    this.shooter = new Shooter(
+      this,
+      this.levelData.colors,
+      specialTypes,
+      specialChance,
+    );
     this.shooter.on('fire', this.onShooterFire, this);
 
     this.trajectory = new Trajectory(this);
@@ -138,7 +153,7 @@ export class GameScene extends Phaser.Scene {
         this.triggerLose('overflow');
       } else if (snapCell) {
         this.flyingBubbles.splice(i, 1);
-        this.placeBubble(b.bubbleColor, snapCell.row, snapCell.col);
+        this.placeBubble(b.bubbleColor, snapCell.row, snapCell.col, b.bubbleType);
         b.destroy();
       } else if (b.y <= BUBBLE_RADIUS) {
         this.flyingBubbles.splice(i, 1);
@@ -196,13 +211,22 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private onShooterFire(color: BubbleColor, angle: number): void {
+  private onShooterFire(
+    color: BubbleColor,
+    angle: number,
+    type: BubbleType = 'NORMAL',
+  ): void {
     const vx = Math.sin(angle) * BUBBLE_SPEED;
     const vy = -Math.cos(angle) * BUBBLE_SPEED;
-    const bubble = this.add.image(SHOOTER_X, SHOOTER_Y - BUBBLE_RADIUS * 1.5, getBubbleTextureKey(color)) as FlyingBubble;
+    const bubble = this.add.image(
+      SHOOTER_X,
+      SHOOTER_Y - BUBBLE_RADIUS * 1.5,
+      getBubbleTextureKey(color, type),
+    ) as FlyingBubble;
     bubble.vx = vx;
     bubble.vy = vy;
     bubble.bubbleColor = color;
+    bubble.bubbleType = type;
     this.flyingBubbles.push(bubble);
     AudioManager.getInstance().playShoot();
   }
@@ -279,10 +303,15 @@ export class GameScene extends Phaser.Scene {
     return null;
   }
 
-  private placeBubble(color: BubbleColor, row: number, col: number): void {
-    this.grid.setCell(row, col, color);
+  private placeBubble(
+    color: BubbleColor,
+    row: number,
+    col: number,
+    type: BubbleType = 'NORMAL',
+  ): void {
+    this.grid.setCell(row, col, color, type);
     const { x, y } = gridToPixel(row, col);
-    const sprite = this.add.image(x, y, getBubbleTextureKey(color));
+    const sprite = this.add.image(x, y, getBubbleTextureKey(color, type));
     this.gridSprites.set(`${row},${col}`, sprite);
     this.addIdleAnimation(sprite);
 
