@@ -28,6 +28,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.generateBubbleTextures();
     this.generateShooterTexture();
+    this.generateSpecialBubbleTextures();
     this.generateParticleTexture();
     AudioManager.getInstance().init(this);
     this.scene.start('MenuScene');
@@ -99,5 +100,91 @@ export class BootScene extends Phaser.Scene {
     ctx.lineWidth = 2;
     ctx.stroke();
     ct.refresh();
+  }
+
+  private generateSpecialBubbleTextures(): void {
+    const size = BUBBLE_RADIUS * 2;
+
+    for (const color of ALL_COLORS) {
+      const stoneKey = getBubbleTextureKey(color, 'STONE');
+      if (!this.textures.exists(stoneKey)) {
+        const texture = this.textures.createCanvas(stoneKey, size, size)!;
+        const ctx = texture.context;
+        ctx.fillStyle = '#555555';
+        ctx.beginPath();
+        ctx.arc(BUBBLE_RADIUS, BUBBLE_RADIUS, BUBBLE_RADIUS - 1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#888888';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(BUBBLE_RADIUS * 0.3, BUBBLE_RADIUS * 0.3);
+        ctx.lineTo(BUBBLE_RADIUS * 0.5, BUBBLE_RADIUS * 0.6);
+        ctx.lineTo(BUBBLE_RADIUS * 0.7, BUBBLE_RADIUS * 0.4);
+        ctx.stroke();
+        texture.refresh();
+      }
+
+      const bombKey = getBubbleTextureKey(color, 'BOMB');
+      if (!this.textures.exists(bombKey)) {
+        const texture = this.textures.createCanvas(bombKey, size, size)!;
+        const ctx = texture.context;
+        const { base } = COLOR_CONFIG[color];
+        const gradient = ctx.createRadialGradient(
+          BUBBLE_RADIUS * 0.5,
+          BUBBLE_RADIUS * 0.5,
+          2,
+          BUBBLE_RADIUS,
+          BUBBLE_RADIUS,
+          BUBBLE_RADIUS,
+        );
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.3, base);
+        gradient.addColorStop(1, '#ff0000');
+        ctx.beginPath();
+        ctx.arc(BUBBLE_RADIUS, BUBBLE_RADIUS, BUBBLE_RADIUS - 1, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.strokeStyle = '#ffd600';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(BUBBLE_RADIUS, 2);
+        ctx.lineTo(BUBBLE_RADIUS, -4);
+        ctx.stroke();
+        texture.refresh();
+      }
+
+      const wildcardKey = getBubbleTextureKey(color, 'WILDCARD');
+      if (!this.textures.exists(wildcardKey)) {
+        const texture = this.textures.createCanvas(wildcardKey, size, size)!;
+        const ctx = texture.context;
+        const gradient = ctx.createRadialGradient(
+          BUBBLE_RADIUS * 0.5,
+          BUBBLE_RADIUS * 0.5,
+          2,
+          BUBBLE_RADIUS,
+          BUBBLE_RADIUS,
+          BUBBLE_RADIUS,
+        );
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.2, '#ff6b6b');
+        gradient.addColorStop(0.4, '#fff176');
+        gradient.addColorStop(0.6, '#69f0ae');
+        gradient.addColorStop(0.8, '#7986ff');
+        gradient.addColorStop(1, '#ce93d8');
+        ctx.beginPath();
+        ctx.arc(BUBBLE_RADIUS, BUBBLE_RADIUS, BUBBLE_RADIUS - 1, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', BUBBLE_RADIUS, BUBBLE_RADIUS);
+        texture.refresh();
+      }
+    }
   }
 }
